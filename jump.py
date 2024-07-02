@@ -15,14 +15,8 @@ rect = pygame.Rect(135, SCREEN_HEIGHT - 137, 30, 30)
 vel = 10
 jumpMax = 20
 
-jump = False
-jumpCount = 0
 transparent_surface_start_width = 50
 moving_obj_vel = 1
-
-move_right = True
-game_over = False
-run = True
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -32,7 +26,7 @@ GREEN = (0, 255, 0)
 
 background = pygame.image.load("assets/bg.png")
 
-initial_character_position = (135, SCREEN_HEIGHT - 230)
+initial_character_position = (0, SCREEN_HEIGHT - 230)
 character = pygame.image.load("assets/character/man_standing.png")
 character_rect = character.get_rect()
 character_rect.topleft = initial_character_position
@@ -49,20 +43,15 @@ moving_obj_rect1 = bomb1[1]
 
 back_buffer = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-coin = coins(850, SCREEN_HEIGHT, 265, 1)
+coin1 = coins(300, SCREEN_HEIGHT, 175, 1)
+
+coin2 = coins(850, SCREEN_HEIGHT, 265, 2)
+
+coins = [coin1, coin2]
+
+score_limit = 100
 
 updateScoreCount: updateScoreCount
-
-
-def reset_game():
-    global move_right, game_over, run, jump, jumpCount, character_rect
-    updateScoreCount(0, True)
-    move_right = True
-    game_over = False
-    run = True
-    jump = False
-    jumpCount = 0
-    character_rect.topleft = initial_character_position
 
 
 class Directions(Enum):
@@ -71,85 +60,128 @@ class Directions(Enum):
     JUMP = 3
 
 
-while run:
-    window.blit(background, (0, 0))
-    clock.tick(50)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        if event.type == pygame.KEYDOWN:
-            if not jump and (event.key == pygame.K_UP or Directions.JUMP == 0):
-                jump = True
-                jumpCount = jumpMax
-            if game_over and event.key == pygame.K_RETURN:
-                reset_game()
+def coinCollect(active_coin):
+    for _coin in active_coin:
+        if character_rect.colliderect(_coin[1]):
+            return updateScoreCount(_coin[2])
+    return updateScoreCount()
 
-    keys = pygame.key.get_pressed()
-    left, right = False, False
-    if not game_over:
-        if keys == pygame.K_LEFT or Directions.LEFT:
-            left = keys[pygame.K_LEFT]
-        if keys == pygame.K_RIGHT or Directions.RIGHT:
-            right = keys[pygame.K_RIGHT]
 
-        move_x = (right - left) * vel
-        new_centerx = character_rect.centerx + move_x
+class JumpGame:
 
-        if transparent_surface_start_width < new_centerx < SCREEN_WIDTH:
-            character_rect.centerx = new_centerx
+    def __init__(self, update_score_count_func):
+        self.frame_iteration = 0
+        self.updateScore = None
+        update_score_count_func(0, True)
+        self.move_right = True
+        self.game_over = False
+        self.run = True
+        self.jump = False
+        self.jumpCount = 0
+        character_rect.topleft = initial_character_position
 
-        if jump:
-            character_rect.y -= jumpCount
-            if jumpCount > -jumpMax:
-                jumpCount -= 1
+    def reset_game(self):
+        updateScoreCount(0, True)
+        self.move_right = True
+        self.game_over = False
+        self.run = True
+        self.jump = False
+        self.jumpCount = 0
+        character_rect.topleft = initial_character_position
+        self.frame_iteration = 0
+
+    def run_game(self):
+        self.frame_iteration += 1
+        window.blit(background, (0, 0))
+        clock.tick(50)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.run = False
+            if event.type == pygame.KEYDOWN:
+                if not self.jump and (event.key == pygame.K_UP or Directions.JUMP == 0):
+                    self.jump = True
+                    self.jumpCount = jumpMax
+                if self.game_over and event.key == pygame.K_RETURN:
+                    self.reset_game()
+
+        keys = pygame.key.get_pressed()
+        left, right = False, False
+        if not self.game_over:
+            if keys[pygame.K_LEFT]:
+                left = keys[pygame.K_LEFT]
+                self.frame_iteration = 0
+            if keys[pygame.K_RIGHT]:
+                right = keys[pygame.K_RIGHT]
+                self.frame_iteration = 0
+
+            move_x = (right - left) * vel
+            new_centerx = character_rect.centerx + move_x
+
+            if transparent_surface_start_width < new_centerx < SCREEN_WIDTH:
+                character_rect.centerx = new_centerx
+
+            if self.jump:
+                character_rect.y -= self.jumpCount
+                if self.jumpCount > -jumpMax:
+                    self.jumpCount -= 1
+                else:
+                    self.jump = False
+
+            if character_rect.colliderect(platform_rect):
+                if self.jumpCount < 0:
+                    character_rect.bottom = platform_rect.top
+                    self.jump = False
+                    self.jumpCount = 0
+
+            if self.move_right:
+                moving_obj_rect.x += moving_obj_vel
+                moving_obj_rect1.x += moving_obj_vel
+                if moving_obj_rect.x >= 650:
+                    self.move_right = False
             else:
-                jump = False
+                moving_obj_rect.x -= moving_obj_vel
+                moving_obj_rect1.x -= moving_obj_vel
+                if moving_obj_rect.x <= 600:
+                    self.move_right = True
 
-        if character_rect.colliderect(platform_rect):
-            if jumpCount < 0:
-                character_rect.bottom = platform_rect.top
-                jump = False
-                jumpCount = 0
+            if (character_rect.colliderect(moving_obj_rect)
+                    or character_rect.colliderect(moving_obj_rect1)
+                    or self.frame_iteration > (10 * score_limit)):  # game over if you do nothing for an amount of time
+                self.game_over = True
 
-        if move_right:
-            moving_obj_rect.x += moving_obj_vel
-            moving_obj_rect1.x += moving_obj_vel
-            if moving_obj_rect.x >= 650:
-                move_right = False
-        else:
-            moving_obj_rect.x -= moving_obj_vel
-            moving_obj_rect1.x -= moving_obj_vel
-            if moving_obj_rect.x <= 600:
-                move_right = True
+        window.blit(background, (0, 0))
 
-        if character_rect.colliderect(moving_obj_rect) or character_rect.colliderect(moving_obj_rect1):
-            game_over = True
+        transparent_surface_bottom = pygame.Surface((SCREEN_WIDTH, 100), pygame.SRCALPHA)
+        transparent_surface_bottom.fill((0, 0, 0, 0))
+        window.blit(transparent_surface_bottom, (0, SCREEN_HEIGHT - 100))
 
-    window.blit(background, (0, 0))
+        transparent_surface_start = pygame.Surface((transparent_surface_start_width, SCREEN_HEIGHT),
+                                                   pygame.SRCALPHA)
+        transparent_surface_start.fill((0, 0, 0, 0))
+        window.blit(transparent_surface_start, (0, 0))
 
-    transparent_surface_bottom = pygame.Surface((SCREEN_WIDTH, 100), pygame.SRCALPHA)
-    transparent_surface_bottom.fill((0, 0, 0, 0))
-    window.blit(transparent_surface_bottom, (0, SCREEN_HEIGHT - 100))
+        window.blit(moving_obj_img, moving_obj_rect.topleft)
+        window.blit(moving_obj_img1, moving_obj_rect1.topleft)
 
-    transparent_surface_start = pygame.Surface((transparent_surface_start_width, SCREEN_HEIGHT), pygame.SRCALPHA)
-    transparent_surface_start.fill((0, 0, 0, 0))
-    window.blit(transparent_surface_start, (0, 0))
+        window.blit(character, character_rect.topleft)
 
-    window.blit(moving_obj_img, moving_obj_rect.topleft)
-    window.blit(moving_obj_img1, moving_obj_rect1.topleft)
+        for coin in coins:
+            window.blit(coin[0], coin[1])
 
-    window.blit(character, character_rect.topleft)
-    window.blit(coin[0], coin[1])
+        self.updateScore = coinCollect(coins)
 
-    updateScore = updateScoreCount()
-    if character_rect.colliderect(coin[1]):
-        updateScore = updateScoreCount(coin[2])
+        window.blit(self.updateScore[0], self.updateScore[1])
 
-    window.blit(updateScore[0], updateScore[1])
+        game_over_check(SCREEN_WIDTH, SCREEN_HEIGHT, self.game_over, window)
 
-    game_over_check(SCREEN_WIDTH, SCREEN_HEIGHT, game_over, window)
+        pygame.display.flip()
 
-    pygame.display.flip()
 
-pygame.quit()
-exit()
+if __name__ == '__main__':
+    game = JumpGame(updateScoreCount)
+
+    while game.run:
+        game.run_game()
+
+    pygame.quit()
+    exit()
