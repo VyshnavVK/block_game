@@ -1,7 +1,7 @@
 from enum import Enum
 
 import pygame
-from gameComponent import coins, updateScoreCount, bomb as b, game_over_check
+from gameComponent import coins, updateScoreCount, bomb as b, game_over_check, coinIdSet
 
 pygame.init()
 
@@ -166,7 +166,8 @@ class JumpGame:
         window.blit(character, character_rect.topleft)
 
         for coin in coins:
-            window.blit(coin[0], coin[1])
+            if coin[2] not in coinIdSet:
+                window.blit(coin[0], coin[1])
 
         self.updateScore = coinCollect(coins)
 
