@@ -46,7 +46,7 @@ def game_over_check(width, height, game_over, window):
         font = pygame.font.Font(None, 120)
         font1 = pygame.font.Font(None, 50)
         game_over_text = font.render("Game Over", True, (102, 43, 40))
-        game_press_enter_to_continue = font1.render("Press Enter to restart", True, (102, 43, 40))
+        game_press_enter_to_continue = font1.render(f"Score:{(len(coinIdSet) - 1) * 100}", True, (102, 43, 40))
         window.blit(game_over_text,
                     (width // 2 - game_over_text.get_width() // 2, height // 3 - game_over_text.get_height() // 2))
         window.blit(game_press_enter_to_continue, (width // 2 - game_press_enter_to_continue.get_width() // 2,
