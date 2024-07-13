@@ -5,6 +5,7 @@ from collections import deque
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import os
 from model import DQN
 
 
@@ -60,4 +61,6 @@ class DQNAgent:
         self.model.load_state_dict(torch.load(name))
 
     def save(self, name):
+        if os.path.exists(name):
+            os.remove(name)
         torch.save(self.model.state_dict(), name)

@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 from jump import GameEnvironment
 from agent import DQNAgent
 
@@ -9,8 +8,8 @@ if __name__ == '__main__':
     action_dim = 2  # Left, Right, Jump
 
     agent = DQNAgent(state_dim, action_dim)
-    agent.load("model/model_430.pth")
-
+    #agent.load("model/model_640.pth")
+    agent.load("model/model_730.pth")
     state = env.reset()
     state = np.array(state, dtype=np.float32)
     done = False

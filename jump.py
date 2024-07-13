@@ -16,7 +16,9 @@ class GameEnvironment:
         self.character = pygame.transform.scale(self.character, (70, 70))
         self.character_rect = self.character.get_rect()
         self.character_rect.topleft = (0, self.screen_height - 230)
+        self.character_rect.bottomleft = (0, self.screen_height - 180)
         self.platform_rect = pygame.Rect(0, self.screen_height - 100, self.screen_width, 100)
+        self.wall_rect = pygame.Rect(screen_width - 30, 0, 100, screen_height)
         self.bombs = [b(700, self.screen_height, 165), b(340, self.screen_height, 165)]
         self.coins = [coins(450, self.screen_height, 265, 1), coins(850, self.screen_height, 265, 2)]
         self.vel = 10
@@ -51,10 +53,8 @@ class GameEnvironment:
         #           self.character_rect.x -= self.vel
         if action == 0:  # Right
             self.character_rect.x += self.vel
-            reward += 0.5
         elif action == 1 and not self.jump:  # Jump
             self.jump = True
-            reward += 0.3
             self.jump_count = self.jump_max
 
         if self.jump:
@@ -70,6 +70,11 @@ class GameEnvironment:
                 self.jump = False
                 self.jump_count = 0
 
+        if self.character_rect.colliderect(self.wall_rect):
+            reward += 100
+            self.game_over = True
+            self.reset()
+
         #        if self.move_right:
         #            for bomb in self.bombs:
         #                bomb[1].x += 1
@@ -84,7 +89,7 @@ class GameEnvironment:
         for bomb in self.bombs:
             if self.character_rect.colliderect(bomb[1]):
                 self.game_over = True
-                reward = -50
+                reward = 0
 
         if self.frame_iteration > 5000:  # game over if you do nothing for an amount of time
             self.game_over = True
@@ -125,11 +130,10 @@ class GameEnvironment:
         if is_playing and len(coinIdSet) >= 3:
             game_over_check(self.screen_width, self.screen_height, self.game_over, self.window)
             self.game_over = True
-
         for bomb in self.bombs:
             if is_playing and self.character_rect.colliderect(bomb[1]):
                 self.game_over = True
-                game_over_check(self.screen_width, self.screen_height, self.game_over, self.window)
+                self.reset()
 
         pygame.display.flip()
 
