@@ -52,7 +52,7 @@ if __name__ == '__main__':
                 print(f"Episode {e+1}/{episodes}, Score: {total_reward}, Epsilon: {agent.epsilon:.2}")
 
         rewards.append(total_reward)
-        avg_reward = np.mean(rewards[-100:])
+        avg_reward = np.mean(rewards)
         avg_rewards.append(avg_reward)
 
         # Update live plot

@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     agent = DQNAgent(state_dim, action_dim)
     #agent.load("model/model_640.pth")
-    agent.load("model/model_730.pth")
+    agent.load("model/best_model.pth")
     state = env.reset()
     state = np.array(state, dtype=np.float32)
     done = False

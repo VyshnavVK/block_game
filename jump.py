@@ -1,4 +1,3 @@
-# game_environment.py
 import pygame
 import numpy as np
 from gameComponent import coins, updateScoreCount, bomb as b, game_over_check, coinIdSet
